@@ -1,0 +1,97 @@
+/**
+ * 智能制造仓储管理系统 - 确认对话框样式
+ */
+
+.custom-confirm-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1060;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.custom-confirm-dialog.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.custom-confirm-content {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(20px);
+  transition: transform 0.3s;
+  overflow: hidden;
+}
+
+.custom-confirm-dialog.show .custom-confirm-content {
+  transform: translateY(0);
+}
+
+.custom-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.custom-confirm-header i {
+  font-size: 1.5rem;
+  color: #ef4444;
+}
+
+.custom-confirm-header h4 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #1e293b;
+}
+
+.custom-confirm-message {
+  padding: 1.5rem;
+  font-size: 1rem;
+  color: #64748b;
+}
+
+.custom-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.custom-confirm-actions button {
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+}
+
+/* 响应式调整 */
+@media (max-width: 576px) {
+  .custom-confirm-content {
+    width: 95%;
+  }
+  
+  .custom-confirm-actions {
+    padding: 0.75rem 1rem;
+  }
+  
+  .custom-confirm-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .custom-confirm-message {
+    padding: 1.25rem;
+  }
+} 

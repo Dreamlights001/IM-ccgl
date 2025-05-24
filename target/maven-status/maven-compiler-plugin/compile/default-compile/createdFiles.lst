@@ -1,0 +1,10 @@
+com\manufacturing\storagecenter\config\WebConfig.class
+com\manufacturing\storagecenter\entity\Item.class
+com\manufacturing\storagecenter\service\impl\ItemServiceImpl.class
+com\manufacturing\storagecenter\StorageCenterApplication.class
+com\manufacturing\storagecenter\controller\ItemRestController.class
+com\manufacturing\storagecenter\config\LoginInterceptor.class
+com\manufacturing\storagecenter\mapper\ItemMapper.class
+com\manufacturing\storagecenter\controller\ItemController.class
+com\manufacturing\storagecenter\controller\LoginController.class
+com\manufacturing\storagecenter\service\ItemService.class

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.manufacturing.storagecenter.mapper.ItemMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.manufacturing.storagecenter.entity.Item">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="code" property="code" />
+        <result column="type" property="type" />
+        <result column="specification" property="specification" />
+        <result column="quantity" property="quantity" />
+        <result column="unit" property="unit" />
+        <result column="storage_area" property="storageArea" />
+        <result column="storage_location" property="storageLocation" />
+        <result column="inbound_time" property="inboundTime" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用列 -->
+    <sql id="Base_Column_List">
+        id, name, code, type, specification, quantity, unit, storage_area, storage_location, 
+        inbound_time, create_time, update_time, remark
+    </sql>
+
+    <!-- 插入物品 -->
+    <insert id="insert" parameterType="com.manufacturing.storagecenter.entity.Item" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO item (
+            name, code, type, specification, quantity, unit, storage_area, storage_location, 
+            inbound_time, create_time, update_time, remark
+        ) VALUES (
+            #{name}, #{code}, #{type}, #{specification}, #{quantity}, #{unit}, #{storageArea}, #{storageLocation}, 
+            #{inboundTime}, NOW(), NOW(), #{remark}
+        )
+    </insert>
+
+    <!-- 根据ID删除物品 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM item WHERE id = #{id}
+    </delete>
+
+    <!-- 更新物品 -->
+    <update id="update" parameterType="com.manufacturing.storagecenter.entity.Item">
+        UPDATE item
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="code != null">code = #{code},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="specification != null">specification = #{specification},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="storageArea != null">storage_area = #{storageArea},</if>
+            <if test="storageLocation != null">storage_location = #{storageLocation},</if>
+            <if test="inboundTime != null">inbound_time = #{inboundTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询物品 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM item
+        WHERE id = #{id}
+    </select>
+
+    <!-- 查询所有物品 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM item
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据物品类型查询物品 -->
+    <select id="selectByType" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM item
+        WHERE type = #{type}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据存储区域查询物品 -->
+    <select id="selectByStorageArea" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM item
+        WHERE storage_area = #{storageArea}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据物品名称模糊查询 -->
+    <select id="selectByNameLike" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM item
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

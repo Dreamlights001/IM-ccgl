@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>编辑物品</title>
+    <th:block layout:fragment="css">
+        <style>
+            .required::after {
+                content: " *";
+                color: var(--danger-color);
+                font-weight: bold;
+            }
+            
+            .edit-card {
+                max-width: 1000px;
+                margin: 0 auto;
+                border-radius: var(--card-border-radius);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+                overflow: hidden;
+                animation: fadeIn 0.6s ease;
+            }
+            
+            .edit-card .card-header {
+                background: var(--primary-gradient);
+                color: white;
+                padding: 1.5rem;
+                border-bottom: none;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .edit-card .card-header::before {
+                content: '';
+                position: absolute;
+                right: -50px;
+                top: -50px;
+                width: 150px;
+                height: 150px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                z-index: 0;
+            }
+            
+            .edit-card .card-header h4 {
+                position: relative;
+                z-index: 1;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            
+            .edit-card .card-body {
+                padding: 2rem;
+                background: #ffffff;
+            }
+            
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+            
+            .form-label {
+                font-weight: 600;
+                color: #475569;
+                margin-bottom: 0.5rem;
+                font-size: 0.95rem;
+            }
+            
+            .form-control, .form-select {
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+                padding: 0.75rem 1rem;
+                transition: all 0.2s;
+            }
+            
+            .form-control:focus, .form-select:focus {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.15);
+            }
+            
+            .input-group-text {
+                border-radius: 8px;
+                background-color: #f8fafc;
+            }
+            
+            .form-text {
+                color: #94a3b8;
+                font-size: 0.85rem;
+                margin-top: 0.5rem;
+            }
+            
+            .action-buttons {
+                display: flex;
+                gap: 10px;
+            }
+            
+            .btn-cancel {
+                background-color: #f1f5f9;
+                color: #334155;
+                border: 1px solid #e2e8f0;
+            }
+            
+            .btn-cancel:hover {
+                background-color: #e2e8f0;
+                color: #1e293b;
+            }
+            
+            .btn-reset {
+                background-color: rgba(249, 115, 22, 0.1);
+                color: #f97316;
+                border: 1px solid rgba(249, 115, 22, 0.2);
+            }
+            
+            .btn-reset:hover {
+                background-color: #f97316;
+                color: white;
+            }
+            
+            .btn-save {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .btn-save::after {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                bottom: -50%;
+                left: -50%;
+                background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 100%);
+                transform: rotateZ(60deg) translate(-5em, 7.5em);
+                animation: shine 3s infinite;
+            }
+            
+            @keyframes shine {
+                0% { transform: rotateZ(60deg) translate(-5em, 7.5em); }
+                100% { transform: rotateZ(60deg) translate(0, -7.5em); }
+            }
+            
+            .field-icon {
+                color: #94a3b8;
+                width: 18px;
+                margin-right: 8px;
+            }
+            
+            .field-row {
+                margin-bottom: 1.5rem;
+                opacity: 0;
+                animation: fadeInUp 0.5s ease forwards;
+            }
+            
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .field-row:nth-child(1) { animation-delay: 0.1s; }
+            .field-row:nth-child(2) { animation-delay: 0.2s; }
+            .field-row:nth-child(3) { animation-delay: 0.3s; }
+            .field-row:nth-child(4) { animation-delay: 0.4s; }
+            .field-row:nth-child(5) { animation-delay: 0.5s; }
+            
+            .form-footer {
+                display: flex;
+                justify-content: space-between;
+                padding-top: 1.5rem;
+                border-top: 1px solid #f1f5f9;
+                margin-top: 1.5rem;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card edit-card">
+        <div class="card-header">
+            <h4 class="mb-0"><i class="fas fa-edit"></i> 编辑物品</h4>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/items/edit}" method="post" id="editItemForm" th:object="${item}" class="needs-validation">
+                <input type="hidden" name="id" th:value="*{id}">
+                
+                <div class="row field-row">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label required">
+                            <i class="fas fa-tag field-icon"></i> 物品名称
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name" th:value="*{name}" required>
+                        <div class="invalid-feedback">请输入物品名称</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="code" class="form-label required">
+                            <i class="fas fa-barcode field-icon"></i> 物品编码
+                        </label>
+                        <input type="text" class="form-control" id="code" name="code" th:value="*{code}" required>
+                        <div class="invalid-feedback">请输入物品编码</div>
+                    </div>
+                </div>
+
+                <div class="row field-row">
+                    <div class="col-md-6">
+                        <label for="type" class="form-label required">
+                            <i class="fas fa-cubes field-icon"></i> 物品类型
+                        </label>
+                        <select class="form-select" id="type" name="type" required>
+                            <option value="">请选择物品类型</option>
+                            <option value="1" th:selected="*{type == 1}">原料</option>
+                            <option value="2" th:selected="*{type == 2}">半成品</option>
+                            <option value="3" th:selected="*{type == 3}">成品</option>
+                        </select>
+                        <div class="invalid-feedback">请选择物品类型</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="specification" class="form-label">
+                            <i class="fas fa-ruler field-icon"></i> 物品规格
+                        </label>
+                        <input type="text" class="form-control" id="specification" name="specification" th:value="*{specification}">
+                    </div>
+                </div>
+
+                <div class="row field-row">
+                    <div class="col-md-6">
+                        <label for="quantity" class="form-label required">
+                            <i class="fas fa-sort-numeric-up field-icon"></i> 物品数量
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="0" th:value="*{quantity}" required>
+                            <span class="input-group-text" id="unitAddon"><i class="fas fa-hashtag"></i></span>
+                        </div>
+                        <div class="invalid-feedback">请输入有效的物品数量</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="unit" class="form-label required">
+                            <i class="fas fa-balance-scale field-icon"></i> 物品单位
+                        </label>
+                        <input type="text" class="form-control" id="unit" name="unit" th:value="*{unit}" required>
+                        <div class="invalid-feedback">请输入物品单位</div>
+                    </div>
+                </div>
+
+                <div class="row field-row">
+                    <div class="col-md-6">
+                        <label for="storageArea" class="form-label">
+                            <i class="fas fa-warehouse field-icon"></i> 存储区域
+                        </label>
+                        <select class="form-select" id="storageArea" name="storageArea">
+                            <option value="">自动判断</option>
+                            <option value="1" th:selected="*{storageArea == 1}">原料区</option>
+                            <option value="2" th:selected="*{storageArea == 2}">半成品区</option>
+                            <option value="3" th:selected="*{storageArea == 3}">成品区</option>
+                        </select>
+                        <div class="form-text"><i class="fas fa-info-circle"></i> 如不选择，系统将根据物品类型自动判断存储区域</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="storageLocation" class="form-label">
+                            <i class="fas fa-map-marker-alt field-icon"></i> 存储位置
+                        </label>
+                        <input type="text" class="form-control" id="storageLocation" name="storageLocation" th:value="*{storageLocation}">
+                    </div>
+                </div>
+
+                <div class="row field-row">
+                    <div class="col-md-6">
+                        <label for="inboundTime" class="form-label">
+                            <i class="fas fa-calendar-alt field-icon"></i> 入库时间
+                        </label>
+                        <input type="datetime-local" class="form-control" id="inboundTime" name="inboundTime" th:value="*{inboundTime != null ? #dates.format(inboundTime, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="remark" class="form-label">
+                            <i class="fas fa-comment-alt field-icon"></i> 备注
+                        </label>
+                        <textarea class="form-control" id="remark" name="remark" rows="3" th:text="*{remark}"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-footer">
+                    <button type="button" class="btn btn-cancel" onclick="window.location.href='list.html'" th:onclick="|window.location.href='@{/items/list}'|">
+                        <i class="fas fa-arrow-left me-2"></i> 返回列表
+                    </button>
+                    <div class="action-buttons">
+                        <button type="reset" class="btn btn-reset">
+                            <i class="fas fa-undo me-2"></i> 重置
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-save">
+                            <i class="fas fa-save me-2"></i> 保存
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <script>
+        $(document).ready(function() {
+            // 表单验证
+            $('#editItemForm').on('submit', function(e) {
+                if (!this.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // 显示一个优雅的提示而不是使用alert
+                    showNotification('请检查表单并填写所有必填字段', 'warning');
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // 添加Bootstrap表单验证类
+            $('#editItemForm').addClass('was-validated');
+            
+            // 表单提交按钮添加加载效果
+            $('#editItemForm').on('submit', function() {
+                const saveButton = $(this).find('button[type="submit"]');
+                saveButton.html('<i class="fas fa-spinner fa-spin me-2"></i> 保存中...');
+                saveButton.attr('disabled', true);
+            });
+            
+            // 物品类型变更时自动判断存储区域
+            $('#type').on('change', function() {
+                const type = $(this).val();
+                if (type !== '' && $('#storageArea').val() === '') {
+                    // 根据物品类型自动设置存储区域
+                    $('#storageArea').val(type);
+                    // 显示一个优雅的提示
+                    showNotification('已根据物品类型自动设置存储区域', 'info');
+                }
+            });
+            
+            // 添加自定义通知功能
+            function showNotification(message, type) {
+                const notificationContainer = $('#notifications');
+                const notificationId = 'notification-' + Date.now();
+                const icon = type === 'success' ? 'check-circle' :
+                             type === 'warning' ? 'exclamation-triangle' :
+                             type === 'danger' ? 'times-circle' : 'info-circle';
+                
+                const notification = `
+                    <div id="${notificationId}" class="notification notification-${type} animate__animated animate__fadeInRight">
+                        <div class="notification-icon">
+                            <i class="fas fa-${icon}"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-message">${message}</div>
+                        </div>
+                        <button class="notification-close" onclick="document.getElementById('${notificationId}').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                notificationContainer.append(notification);
+                
+                // 自动关闭
+                setTimeout(() => {
+                    const element = document.getElementById(notificationId);
+                    if (element) {
+                        element.classList.remove('animate__fadeInRight');
+                        element.classList.add('animate__fadeOutRight');
+                        setTimeout(() => {
+                            if (element) element.remove();
+                        }, 500);
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+</th:block>
+</body>
+</html>

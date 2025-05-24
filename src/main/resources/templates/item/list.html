@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>智能制造仓储管理系统</title>
+    <th:block layout:fragment="css">
+        <style>
+            .dashboard-stats {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+                margin-bottom: 2rem;
+            }
+            
+            .stat-card {
+                background: white;
+                border-radius: var(--card-border-radius);
+                padding: 1.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                transition: all 0.3s;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .stat-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            }
+            
+            .stat-card .stat-icon {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                color: white;
+                opacity: 0.9;
+            }
+            
+            .stat-card .stat-value {
+                font-size: 2rem;
+                font-weight: 700;
+                color: #1e293b;
+                margin-bottom: 0.5rem;
+            }
+            
+            .stat-card .stat-label {
+                color: #64748b;
+                font-size: 0.9rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            .stat-card .stat-change {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.25rem 0.5rem;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                margin-top: 0.5rem;
+            }
+            
+            .stat-change.positive {
+                background-color: rgba(16, 185, 129, 0.1);
+                color: #10b981;
+            }
+            
+            .stat-change.negative {
+                background-color: rgba(239, 68, 68, 0.1);
+                color: #ef4444;
+            }
+            
+            /* 搜索栏容器居中 */
+            .search-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 1.5rem;
+                gap: 1rem;
+            }
+            
+            .search-input-group {
+                width: 500px;
+                max-width: 100%;
+            }
+            
+            /* 物品类型过滤器 */
+            .table-filters {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .filter-chip {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.5rem 1rem;
+                border-radius: 20px;
+                font-weight: 600;
+                font-size: 0.9rem;
+                cursor: pointer;
+                transition: all 0.2s;
+                border: 1px solid #e2e8f0;
+                background-color: white;
+                color: #64748b;
+            }
+            
+            .filter-chip:hover {
+                background-color: rgba(67, 97, 238, 0.1);
+                color: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+            
+            .filter-chip.active {
+                background-color: rgba(67, 97, 238, 0.1);
+                color: var(--primary-color);
+                border-color: var(--primary-color);
+                font-weight: 700;
+            }
+            
+            /* 居中表格容器 */
+            .table-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 1rem;
+            }
+            
+            .table-responsive {
+                background-color: white;
+                border-radius: var(--card-border-radius);
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                margin-bottom: 2rem;
+            }
+            
+            .table {
+                margin-bottom: 0;
+            }
+            
+            .table th {
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                letter-spacing: 0.05em;
+                padding: 1rem 1.5rem;
+                background-color: #f8fafc;
+                color: #64748b;
+                border-bottom: 1px solid #e2e8f0;
+                cursor: pointer;
+                position: relative;
+            }
+            
+            .table th.sortable:hover {
+                background-color: #f1f5f9;
+                color: var(--primary-color);
+            }
+            
+            .table th.sortable:after {
+                content: '';
+            }
+            
+            .table th.sort-asc:after {
+                content: '';
+            }
+            
+            .table th.sort-desc:after {
+                content: '';
+            }
+            
+            .table td {
+                padding: 1rem 1.5rem;
+                vertical-align: middle;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            
+            .table tbody tr {
+                transition: all 0.2s;
+            }
+            
+            .table tbody tr:hover {
+                background-color: #f1f5f9;
+            }
+            
+            .item-name {
+                cursor: pointer;
+                color: var(--primary-color);
+                font-weight: 600;
+                transition: all 0.2s;
+            }
+            
+            .item-name:hover {
+                text-decoration: none;
+                color: var(--primary-color);
+                opacity: 0.8;
+            }
+            
+            .action-buttons {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            
+            .action-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.4rem 0.8rem;
+                border-radius: 6px;
+                transition: all 0.2s;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
+                gap: 6px;
+            }
+            
+            .action-btn.edit {
+                color: var(--primary-color);
+                background-color: rgba(67, 97, 238, 0.1);
+                border: 1px solid transparent;
+            }
+            
+            .action-btn.edit:hover {
+                background-color: var(--primary-color);
+                color: white;
+            }
+            
+            .action-btn.delete {
+                color: var(--danger-color);
+                background-color: rgba(239, 68, 68, 0.1);
+                border: 1px solid transparent;
+            }
+            
+            .action-btn.delete:hover {
+                background-color: var(--danger-color);
+                color: white;
+            }
+            
+            .area-badge, .type-badge {
+                font-size: 0.75rem;
+                    font-weight: 600;
+                padding: 0.35rem 0.75rem;
+                border-radius: 20px;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+            }
+            
+            .type-badge i, .area-badge i {
+                font-size: 0.85rem;
+            }
+            
+            /* 物品详情弹窗 */
+            .modal-detail {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1050;
+                padding: 1rem;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s, visibility 0.3s;
+            }
+            
+            .modal-detail.show {
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .modal-content {
+                background: white;
+                border-radius: 10px;
+                max-width: 800px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                transform: translateY(20px);
+                transition: transform 0.3s;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            }
+            
+            .modal-detail.show .modal-content {
+                transform: translateY(0);
+            }
+            
+            .modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 1.25rem 1.5rem;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            }
+            
+            .modal-title {
+                font-weight: 700;
+                font-size: 1.25rem;
+                margin: 0;
+                color: #1e293b;
+            }
+            
+            .modal-close {
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                cursor: pointer;
+                color: #64748b;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.2s;
+            }
+            
+            .modal-close:hover {
+                background-color: #f1f5f9;
+                color: #ef4444;
+            }
+            
+            .modal-body {
+                padding: 1.5rem;
+            }
+            
+            .loading-indicator {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem;
+            }
+            
+            .empty-state {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 3rem;
+                text-align: center;
+            }
+            
+            .empty-state-icon {
+                font-size: 3rem;
+                color: #cbd5e1;
+                margin-bottom: 1rem;
+            }
+            
+            .empty-state-text {
+                color: #64748b;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+            }
+            
+            .empty-state-subtext {
+                color: #94a3b8;
+                margin-bottom: 1.5rem;
+                max-width: 300px;
+            }
+            
+            /* 添加按钮样式 */
+            .btn-add {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 30px;
+                font-weight: 600;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                transition: all 0.3s;
+                box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+            }
+            
+            .btn-add:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+                color: white;
+                background: #2563eb;
+            }
+            
+            #table-search {
+                font-size: 1.05rem;
+                padding: 0.7rem 1.2rem;
+            }
+            
+            @media (max-width: 768px) {
+                .dashboard-stats {
+                    grid-template-columns: 1fr;
+                }
+                
+                .search-container {
+                    flex-direction: column;
+                }
+                
+                .search-input-group {
+                    width: 100%;
+                }
+                
+                .table th, .table td {
+                    padding: 0.75rem;
+                }
+                
+                .action-buttons {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+                
+                .action-btn {
+                    width: 100%;
+                }
+            }
+            
+            /* 饼状图容器 */
+            .chart-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 2rem;
+                padding: 1rem;
+                background-color: white;
+                border-radius: var(--card-border-radius);
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            
+            .chart-wrapper {
+                max-width: 800px;
+            }
+            
+            .chart-card {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                align-items: center;
+            }
+            
+            .chart-canvas-container {
+                position: relative;
+                width: 300px;
+                height: 300px;
+                margin: 0 auto;
+            }
+            
+            .total-count {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+            }
+            
+            .total-count .count {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: #1e293b;
+                line-height: 1;
+            }
+            
+            .total-count .label {
+                font-size: 0.9rem;
+                color: #64748b;
+                font-weight: 600;
+            }
+            
+            .chart-legend {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            
+            .legend-color {
+                width: 16px;
+                height: 16px;
+                border-radius: 4px;
+            }
+            
+            .legend-label {
+                font-weight: 600;
+                color: #334155;
+            }
+            
+            .legend-value {
+                margin-left: auto;
+                font-weight: 700;
+                color: #1e293b;
+            }
+            
+            .legend-percent {
+                font-size: 0.9rem;
+                color: #64748b;
+                min-width: 50px;
+                text-align: right;
+            }
+            
+            @media (min-width: 992px) {
+                body .container-fluid .row .col-lg-10.content {
+                    flex: 0 0 100%;
+                    max-width: 100%;
+                }
+                
+                body .container-fluid .row .col-lg-2.sidebar {
+                    display: none;
+                }
+                
+                .chart-card {
+                    grid-template-columns: 1fr 1fr;
+                }
+                
+                .chart-canvas-container {
+                    width: 350px;
+                    height: 350px;
+                }
+            }
+            
+            /* 表格居中强制规则 */
+            body .content .table-container {
+                max-width: 1000px !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                float: none !important;
+                padding: 0 1rem;
+            }
+            
+            .chart-container {
+                max-width: 1000px !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+            
+            .search-container, .table-filters {
+                max-width: 1000px !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+            
+            /* 表格行间隔色 */
+            .table tbody tr:nth-of-type(odd) {
+                background-color: rgba(0, 0, 0, 0.02);
+            }
+            
+            /* 图表容器居中 */
+            .chart-wrapper {
+                max-width: 800px;
+                width: 100%;
+                position: relative;
+                margin: 0 auto;
+            }
+            
+            /* 移动设备响应式布局 */
+            @media (max-width: 768px) {
+                .chart-card {
+                    grid-template-columns: 1fr;
+                }
+                
+                .chart-canvas-container {
+                    width: 250px;
+                    height: 250px;
+                }
+            }
+            
+            /* 大屏幕响应式布局 */
+            @media (min-width: 992px) {
+                body .container-fluid .row .col-lg-10.content {
+                    flex: 0 0 100%;
+                    max-width: 100%;
+                }
+                
+                body .container-fluid .row .col-lg-2.sidebar {
+                    display: none;
+                }
+                
+                .chart-card {
+                    grid-template-columns: 1fr 1fr;
+                }
+                
+                .chart-canvas-container {
+                    width: 350px;
+                    height: 350px;
+                }
+            }
+            
+            .action-btn, .btn-add, .action-btn:hover, .btn-add:hover {
+                text-decoration: none !important;
+            }
+            
+            .sortable {
+                cursor: pointer;
+                position: relative;
+            }
+            
+            .sort-arrows {
+                color: #cbd5e1;
+                font-size: 0.85em;
+                margin-left: 0.3rem;
+            }
+            
+            .sortable:hover .sort-arrows {
+                color: var(--primary-color);
+            }
+            
+            .sortable.sort-asc .sort-arrows {
+                color: var(--primary-color);
+                content: '↑';
+            }
+            
+            .sortable.sort-desc .sort-arrows {
+                color: var(--primary-color);
+                content: '↓';
+            }
+            
+            .section-title {
+                color: #1e293b;
+                font-weight: 700;
+                position: relative;
+                text-align: center;
+                width: 100%;
+                padding-bottom: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .section-title:after {
+                content: '';
+                position: absolute;
+                left: 50%;
+                bottom: 0;
+                transform: translateX(-50%);
+                height: 3px;
+                width: 80px;
+                background: var(--primary-color);
+                border-radius: 2px;
+            }
+            
+            .main-title {
+                font-size: 3em;
+                font-weight: 800;
+                color: #1e293b;
+                margin-bottom: 1.5rem;
+                text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+                text-align: center;
+                width: 100%;
+                display: block;
+            }
+            
+            .storage-location {
+                font-weight: 500;
+                color: #334155;
+                padding: 3px 6px;
+                border-radius: 4px;
+                background-color: #f1f5f9;
+                display: inline-block;
+                margin-top: 6px;
+                font-size: 0.85rem;
+            }
+            
+            .storage-location i {
+                margin-right: 4px;
+                color: #64748b;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 主标题 -->
+    <h1 class="main-title text-center mb-5">智能制造仓储管理系统</h1>
+    
+    <!-- 饼状图标题 -->
+    <h2 class="section-title mb-4">仓库监管</h2>
+    
+    <!-- 饼状图统计 -->
+    <div class="chart-container">
+        <div class="chart-wrapper">
+            <div class="chart-card">
+                <div class="chart-canvas-container">
+                    <canvas id="itemsChart"></canvas>
+                    <div class="total-count">
+                        <div class="count" th:text="${#lists.size(items)}">0</div>
+                        <div class="label">物品总数</div>
+                    </div>
+                </div>
+                <div class="chart-legend" id="chartLegend">
+                    <!-- 图例将由JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+                </div>
+
+    <!-- 列表标题 -->
+    <h2 class="section-title mb-3 mt-4">物品列表</h2>
+
+    <!-- 搜索栏 -->
+    <div class="search-container">
+        <div class="search-input-group">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" id="table-search" class="form-control border-start-0" placeholder="搜索物品...">
+            </div>
+        </div>
+        <a th:href="@{/items/add}" class="btn-add">
+            <i class="fas fa-plus"></i>
+            <span>新增物品</span>
+        </a>
+            </div>
+
+    <!-- 类型过滤器 -->
+    <div class="table-filters">
+        <div class="filter-chip active type-filter" data-type="all">
+            <i class="fas fa-layer-group me-2"></i> 全部
+        </div>
+        <div class="filter-chip type-filter" data-type="1">
+            <i class="fas fa-cube me-2"></i> 原料
+        </div>
+        <div class="filter-chip type-filter" data-type="2">
+            <i class="fas fa-tools me-2"></i> 半成品
+        </div>
+        <div class="filter-chip type-filter" data-type="3">
+            <i class="fas fa-box-open me-2"></i> 成品
+        </div>
+                </div>
+                
+    <!-- 物品表格 -->
+    <div class="table-container" style="max-width: 1000px; margin-left: auto; margin-right: auto; float: none;">
+        <div class="table-responsive">
+            <table class="table" id="items-table">
+                <thead>
+                    <tr>
+                        <th>物品信息</th>
+                        <th class="sortable" data-sort="type">类型 <span class="sort-arrows">↑↓</span></th>
+                        <th class="sortable" data-sort="quantity">数量 <span class="sort-arrows">↑↓</span></th>
+                        <th>存储区域</th>
+                        <th class="sortable" data-sort="inbound-time">入库时间 <span class="sort-arrows">↑↓</span></th>
+                        <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+                    <!-- 加载中状态 -->
+                    <tr th:if="${items == null}" class="loading-row">
+                        <td colspan="6">
+                            <div class="loading-indicator">
+                                <div class="spinner-border text-primary me-3"></div>
+                                <span>正在加载数据...</span>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- 空状态 -->
+                    <tr th:if="${items != null && items.isEmpty()}" class="empty-row">
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-box-open"></i>
+                                </div>
+                                <div class="empty-state-text">暂无物品数据</div>
+                                <div class="empty-state-subtext">
+                                    您可以点击"新增物品"按钮添加第一个物品
+                                </div>
+                                <a th:href="@{/items/add}" class="btn-add">
+                                    <i class="fas fa-plus me-2"></i>新增物品
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- 物品列表 -->
+            <tr th:each="item : ${items}" 
+                        th:if="${items != null && !items.isEmpty()}"
+                        th:attr="data-id=${item.id}, data-type=${item.type}, data-type-value=${item.type}, data-quantity=${item.quantity}, data-inbound-time=${#dates.format(item.inboundTime, 'yyyyMMddHHmm')}">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-cube fs-4 text-primary"></i>
+                                </div>
+                        <div>
+                                    <div class="item-name" th:attr="data-id=${item.id}" onclick="showItemDetail(this)">
+                                        <span th:text="${item.name}"></span>
+                                    </div>
+                                    <div class="small text-muted" th:text="${item.code}"></div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                            <span th:if="${item.type == 1}" class="type-badge" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <i class="fas fa-cube"></i> 原料
+                            </span>
+                            <span th:if="${item.type == 2}" class="type-badge" style="background-color: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                <i class="fas fa-tools"></i> 半成品
+                            </span>
+                            <span th:if="${item.type == 3}" class="type-badge" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                                <i class="fas fa-box-open"></i> 成品
+                            </span>
+                </td>
+                <td>
+                            <div class="d-flex flex-column">
+                                <div class="mb-1" th:text="${item.quantity} + ' ' + ${item.unit}"></div>
+                                <div class="progress" style="height: 6px; width: 100px;">
+                                    <div class="progress-bar" role="progressbar" th:style="'width: ' + ${item.quantity > 100 ? 100 : item.quantity} + '%'"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:if="${item.storageArea == 1}" class="area-badge" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <i class="fas fa-warehouse"></i> 原料区
+                            </span>
+                            <span th:if="${item.storageArea == 2}" class="area-badge" style="background-color: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                <i class="fas fa-warehouse"></i> 半成品区
+                            </span>
+                            <span th:if="${item.storageArea == 3}" class="area-badge" style="background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                <i class="fas fa-warehouse"></i> 成品区
+                        </span>
+                            <div th:if="${item.storageLocation != null && item.storageLocation != ''}" class="storage-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span th:text="${item.storageLocation}"></span>
+                    </div>
+                </td>
+                <td>
+                            <div th:text="${#dates.format(item.inboundTime, 'yyyy-MM-dd')}"></div>
+                            <div class="small text-muted" th:text="${#dates.format(item.inboundTime, 'HH:mm')}"></div>
+                </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a th:href="@{/items/edit/{id}(id=${item.id})}" class="action-btn edit" title="编辑">
+                                    <i class="fas fa-edit"></i>
+                                    <span>编辑</span>
+                                </a>
+                                <a th:href="@{/items/delete/{id}(id=${item.id})}" class="action-btn delete" title="删除">
+                                    <i class="fas fa-trash"></i>
+                                    <span>删除</span>
+                                </a>
+
+
+                    </div>
+                </td>
+            </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 物品详情弹窗 -->
+    <div id="itemDetailModal" class="modal-detail">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">物品详情</h5>
+                <button type="button" class="modal-close" onclick="hideItemDetail()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="itemDetailContent">
+                    <!-- 物品详情内容将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="js">
+    <!-- 引入Chart.js库 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化饼状图
+            initItemsChart();
+            
+            // 设置类型过滤
+            document.querySelectorAll('.type-filter').forEach(filter => {
+                filter.addEventListener('click', function() {
+                    // 更新激活状态
+                    document.querySelectorAll('.type-filter').forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const type = this.getAttribute('data-type');
+                    filterTable(type);
+                });
+            });
+            
+            // 设置搜索过滤
+            const searchInput = document.getElementById('table-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchText = this.value.toLowerCase();
+                    filterTableByText(searchText);
+                });
+            }
+            
+            // 设置表格排序功能
+            document.querySelectorAll('.sortable').forEach(th => {
+                th.addEventListener('click', function() {
+                    const sortField = this.getAttribute('data-sort');
+                    const isSortAsc = this.classList.contains('sort-asc');
+                    
+                    // 移除所有排序标记
+                    document.querySelectorAll('.sortable').forEach(el => {
+                        el.classList.remove('sort-asc', 'sort-desc');
+                        el.querySelector('.sort-arrows').textContent = '↑↓';
+                    });
+                    
+                    // 添加当前排序标记
+                    if (isSortAsc) {
+                        this.classList.add('sort-desc');
+                        this.querySelector('.sort-arrows').textContent = '↓';
+                        sortTable(sortField, false);
+                    } else {
+                        this.classList.add('sort-asc');
+                        this.querySelector('.sort-arrows').textContent = '↑';
+                        sortTable(sortField, true);
+                    }
+                });
+            });
+            
+            // 表格排序函数
+            function sortTable(field, ascending) {
+                const tbody = document.querySelector('#items-table tbody');
+                const rows = Array.from(document.querySelectorAll('tr[data-id]'));
+                
+                // 从表格中移除所有行以便重新排序
+                rows.forEach(row => {
+                    row.remove();
+                });
+                
+                // 根据指定字段排序
+                rows.sort((a, b) => {
+                    let valueA, valueB;
+                    
+                    if (field === 'quantity') {
+                        valueA = parseInt(a.getAttribute('data-quantity')) || 0;
+                        valueB = parseInt(b.getAttribute('data-quantity')) || 0;
+                    } else if (field === 'inbound-time') {
+                        valueA = a.getAttribute('data-inbound-time') || '';
+                        valueB = b.getAttribute('data-inbound-time') || '';
+                    } else if (field === 'type') {
+                        valueA = parseInt(a.getAttribute('data-type-value')) || 0;
+                        valueB = parseInt(b.getAttribute('data-type-value')) || 0;
+                    }
+                    
+                    if (ascending) {
+                        return valueA - valueB;
+                    } else {
+                        return valueB - valueA;
+                    }
+                });
+                
+                // 重新添加排序后的行
+                rows.forEach(row => {
+                    tbody.appendChild(row);
+                });
+            }
+            
+            // 表格过滤函数 - 按类型
+            function filterTable(type) {
+                const rows = document.querySelectorAll('tr[data-type]');
+                rows.forEach(row => {
+                    if (type === 'all' || row.getAttribute('data-type') === type) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // 检查是否有可见行
+                checkEmptyState();
+            }
+            
+            // 表格过滤函数 - 按文本
+            function filterTableByText(text) {
+                const rows = document.querySelectorAll('tr[data-type]');
+                rows.forEach(row => {
+                    if (text === '') {
+                        row.style.display = '';
+                    } else {
+                        const rowText = row.textContent.toLowerCase();
+                        if (rowText.includes(text)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+                
+                // 检查是否有可见行
+                checkEmptyState();
+            }
+            
+            // 检查是否需要显示空状态
+            function checkEmptyState() {
+                const rows = document.querySelectorAll('tr[data-type]');
+                const visibleRows = [...rows].filter(row => row.style.display !== 'none');
+                
+                const table = document.querySelector('table');
+                const existingEmptyRow = document.querySelector('.filtered-empty-row');
+                
+                if (visibleRows.length === 0 && !existingEmptyRow) {
+                    // 创建并添加空状态行
+                    const tbody = table.querySelector('tbody');
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.className = 'filtered-empty-row';
+                    emptyRow.innerHTML = `
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-filter"></i>
+                                </div>
+                                <div class="empty-state-text">没有匹配的物品</div>
+                                <div class="empty-state-subtext">
+                                    尝试使用不同的过滤条件
+                                </div>
+                                <button class="btn btn-outline-primary reset-filter">
+                                    <i class="fas fa-sync-alt me-2"></i>重置过滤器
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(emptyRow);
+                    
+                    // 添加重置过滤器事件
+                    emptyRow.querySelector('.reset-filter').addEventListener('click', function() {
+                        document.querySelectorAll('.type-filter').forEach(f => f.classList.remove('active'));
+                        document.querySelector('.type-filter[data-type="all"]').classList.add('active');
+                        if (searchInput) searchInput.value = '';
+                        filterTable('all');
+                    });
+                } else if (visibleRows.length > 0 && existingEmptyRow) {
+                    // 移除空状态行
+                    existingEmptyRow.remove();
+                }
+            }
+        });
+        
+        // 物品详情弹窗功能
+        function showItemDetail(element) {
+            const itemId = element.getAttribute('data-id');
+            const modal = document.getElementById('itemDetailModal');
+            const contentDiv = document.getElementById('itemDetailContent');
+            
+            // 加载物品详情数据
+            contentDiv.innerHTML = `
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+            
+            // 显示弹窗
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // 防止背景滚动
+            
+            // 获取物品详情数据
+            // 通常这里会从服务器获取数据，但为了演示，我们从表格行中提取
+            const itemRow = element.closest('tr');
+            const itemName = element.querySelector('span').textContent;
+            const itemCode = element.closest('td').querySelector('.small.text-muted').textContent;
+            const itemType = getTypeText(itemRow.getAttribute('data-type'));
+            const itemQuantity = itemRow.getAttribute('data-quantity');
+            const itemUnit = itemRow.querySelector('td:nth-child(3) .mb-1').textContent.split(' ')[1];
+            const storageArea = getAreaText(itemRow.querySelector('td:nth-child(4) .area-badge').textContent.trim());
+            const storageLocation = itemRow.querySelector('td:nth-child(4) .storage-location').textContent.trim().replace(/\s+/g, ' ');
+            const inboundTime = itemRow.querySelector('td:nth-child(5)').textContent.trim().replace(/\s+/g, ' ');
+            
+            // 模拟异步加载
+            setTimeout(() => {
+                // 构建详情内容
+                contentDiv.innerHTML = `
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-white">
+                                    <h6 class="mb-0">基本信息</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">物品名称</label>
+                                            <div class="fw-semibold">${itemName}</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">物品编码</label>
+                                            <div>${itemCode}</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">物品类型</label>
+                                            <div>${itemType}</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">数量</label>
+                                            <div>${itemQuantity} ${itemUnit}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-white">
+                                    <h6 class="mb-0">存储信息</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">存储区域</label>
+                                            <div>${storageArea}</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">存储位置</label>
+                                            <div class="fw-semibold ${storageLocation ? '' : 'text-muted fst-italic'}">${storageLocation || '未设置'}</div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label text-muted">入库时间</label>
+                                            <div>${inboundTime}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h6 class="mb-0">备注信息</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted fst-italic">暂无备注信息</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+                            <a href="/items/edit/${itemId}" class="btn btn-primary">
+                                <i class="fas fa-edit me-2"></i>编辑物品
+                            </a>
+                            <button class="btn btn-outline-secondary" onclick="hideItemDetail()">
+                                <i class="fas fa-times me-2"></i>关闭
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }, 500);
+        }
+        
+        function hideItemDetail() {
+            const modal = document.getElementById('itemDetailModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = ''; // 恢复背景滚动
+        }
+        
+        // 点击弹窗背景关闭弹窗
+        document.getElementById('itemDetailModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideItemDetail();
+            }
+        });
+        
+        // 辅助函数 - 获取类型文本
+        function getTypeText(type) {
+            switch(type) {
+                case '1': return '原料';
+                case '2': return '半成品';
+                case '3': return '成品';
+                default: return '未知';
+            }
+        }
+        
+        // 辅助函数 - 获取区域文本
+        function getAreaText(areaText) {
+            if (areaText.includes('原料区')) return '原料区';
+            if (areaText.includes('半成品区')) return '半成品区';
+            if (areaText.includes('成品区')) return '成品区';
+            return '未知区域';
+        }
+        
+        // 初始化物品类型饼状图
+        function initItemsChart() {
+            const rawItems = /*[[${items}]]*/ [];
+            if (!rawItems || rawItems.length === 0) return;
+            
+            const totalCount = rawItems.length;
+            
+            // 计算各类型物品数量
+            const rawMaterialCount = rawItems.filter(item => item.type === 1).length;
+            const semifinishedCount = rawItems.filter(item => item.type === 2).length;
+            const finishedCount = rawItems.filter(item => item.type === 3).length;
+            
+            // 准备图表数据
+            const data = [rawMaterialCount, semifinishedCount, finishedCount];
+            const labels = ['原料', '半成品', '成品'];
+            const colors = ['#10b981', '#f59e0b', '#ef4444'];
+            
+            // 配置图表
+            const ctx = document.getElementById('itemsChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: 'white',
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    cutout: '65%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / totalCount) * 100).toFixed(1);
+                                    return `${context.label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 生成自定义图例
+            generateCustomLegend(labels, data, colors, totalCount);
+        }
+        
+        // 生成自定义图例
+        function generateCustomLegend(labels, data, colors, total) {
+            const legendContainer = document.getElementById('chartLegend');
+            legendContainer.innerHTML = '';
+            
+            labels.forEach((label, index) => {
+                const percentage = ((data[index] / total) * 100).toFixed(1);
+                
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = colors[index];
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'legend-label';
+                labelDiv.textContent = label;
+                
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'legend-value';
+                valueDiv.textContent = data[index];
+                
+                const percentDiv = document.createElement('div');
+                percentDiv.className = 'legend-percent';
+                percentDiv.textContent = `${percentage}%`;
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(labelDiv);
+                legendItem.appendChild(valueDiv);
+                legendItem.appendChild(percentDiv);
+                
+                legendContainer.appendChild(legendItem);
+            });
+        }
+    </script>
+</th:block>
+</body>
+</html>
